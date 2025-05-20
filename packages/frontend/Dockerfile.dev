@@ -1,0 +1,24 @@
+# Development Dockerfile for the frontend
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package.json files for workspace setup
+COPY package.json .
+COPY packages/frontend/package.json ./packages/frontend/
+COPY package-lock.json .
+
+# Install dependencies using workspace
+RUN npm ci
+
+# Copy the rest of the application
+COPY . .
+
+# Set environment to development
+ENV NODE_ENV=development
+
+# Expose port 3000 for Vite dev server
+EXPOSE 3000
+
+# Default command starts the Vite development server
+CMD ["npm", "run", "dev", "--workspace=frontend"]
