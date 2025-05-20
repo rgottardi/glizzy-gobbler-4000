@@ -1,12 +1,28 @@
-// Frontend configuration for Vite
+/**
+ * Frontend Configuration Module
+ * 
+ * Centralizes access to environment variables needed by the frontend.
+ * This module loads variables from the root .env file with VITE_ prefix.
+ */
 
-// These variables are injected by Vite from .env file
-// All env variables used in the frontend must be prefixed with VITE_
+// Vite automatically exposes env variables prefixed with VITE_
+// They are available through import.meta.env
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+// Header for multi-tenant context
 export const TENANT_ID_HEADER = 'x-tenant-id';
 
-// Export configuration as a single object for easier imports
-export default {
+// Other frontend configuration values can be added here
+
+// For development clarity, return the config as a log-friendly object
+const frontendConfig = {
   API_BASE_URL,
-  TENANT_ID_HEADER
+  TENANT_ID_HEADER,
 };
+
+// Log the configuration in development mode only
+if (import.meta.env.DEV) {
+  console.log('Frontend Config:', frontendConfig);
+}
+
+export default frontendConfig;
