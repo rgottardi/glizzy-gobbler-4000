@@ -1,65 +1,46 @@
+/**
+ * Main Server Entry Point
+ */
 import express from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
-import { PORT, MONGODB_URI } from '../../config/backend.config.mjs';
+import cookieParser from 'cookie-parser';
+import { PORT, NODE_ENV } from '../../../config/backend.config.mjs';
 
-// Import utilities (to be created later)
-// import logger from './utils/logger.mjs';
-
-// Initialize Express
+// Create Express app
 const app = express();
 
-// Connect to MongoDB
-const connectDB = async () => {
-  try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('MongoDB Connected');
-    // logger.info('MongoDB Connected');
-  } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    // logger.error(`MongoDB connection error: ${error.message}`);
-    process.exit(1);
-  }
-};
-
-// Middleware
+// Core Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  credentials: true // Important for HttpOnly cookies
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// API Routes (to be added later)
-// app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/tenants', tenantRoutes);
-
-// Example route for testing
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'success', 
-    message: 'API is running', 
-    environment: process.env.NODE_ENV || 'development'
-  });
+// API Routes (placeholders - will be implemented in subsequent issues)
+app.get('/api', (req, res) => {
+  res.json({ message: 'Welcome to the Glizzy Gobbler 4000 API' });
 });
 
-// Error handling middleware
+// Simple health check route
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', environment: NODE_ENV });
+});
+
+// Basic error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  // logger.error(err.stack);
-  res.status(err.status || 500).json({
-    status: 'error',
-    message: err.message || 'Internal Server Error'
+  const statusCode = err.statusCode || 500;
+  console.error(`[ERROR] ${statusCode} - ${err.message}`, err.stack);
+  res.status(statusCode).json({
+    message: err.message || 'Internal Server Error',
+    stack: NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
-// Start server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-    // logger.info(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-  });
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} in ${NODE_ENV} mode`);
 });
 
 export default app;
