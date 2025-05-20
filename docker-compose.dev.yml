@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./packages/frontend/Dockerfile.dev
+    ports:
+      - "${DOCKER_FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./packages/frontend:/app/packages/frontend
+      - node_modules_frontend:/app/packages/frontend/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:5000/api}
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    env_file:
+      - .env
+    # Enable hot-reloading with Vite
+    stdin_open: true
+    tty: true
+    command: npm run dev
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./packages/backend/Dockerfile.dev
+    ports:
+      - "${DOCKER_BACKEND_PORT:-5000}:${PORT:-5000}"
+    volumes:
+      - ./packages/backend:/app/packages/backend
+      - ./config:/app/config
+      - node_modules_backend:/app/packages/backend/node_modules
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo:27017/glizzy_gobbler
+      - PORT=${PORT:-5000}
+      - FRONTEND_URL=http://localhost:${DOCKER_FRONTEND_PORT:-3000}
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    env_file:
+      - .env
+    # Use nodemon for auto-restart on file changes
+    command: npm run dev
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "${DOCKER_MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo-data:/data/db
+      # Add initialization scripts for dev environment
+      - ./config/mongo-init:/docker-entrypoint-initdb.d
+    environment:
+      - MONGO_INITDB_DATABASE=glizzy_gobbler
+    networks:
+      - app-network
+    env_file:
+      - .env
+
+  # MongoDB web admin tool for development
+  mongo-express:
+    image: mongo-express:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    env_file:
+      - .env
+    # Only start in development mode
+    profiles:
+      - dev
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
+  node_modules_frontend:
+    driver: local
+  node_modules_backend:
+    driver: local
