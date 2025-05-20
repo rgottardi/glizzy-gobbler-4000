@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import mongoose from 'mongoose';
 import { PORT, NODE_ENV } from '../../../config/backend.config.mjs';
 import logger from './utils/logger.mjs';
 import { connectDB } from './db/connection.mjs';
