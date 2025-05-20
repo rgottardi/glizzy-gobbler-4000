@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { PORT, NODE_ENV } from '../../../config/backend.config.mjs';
 import logger from './utils/logger.mjs';
+import { connectDB } from './db/connection.mjs';
 
 // Create Express app
 const app = express();
@@ -37,7 +38,8 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     environment: NODE_ENV,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
@@ -74,9 +76,23 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT} in ${NODE_ENV} mode`);
-});
+// Start the server and connect to MongoDB
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+    
+    // Start Express server
+    app.listen(PORT, () => {
+      logger.info(`Server running on port ${PORT} in ${NODE_ENV} mode`);
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Initialize server
+startServer();
 
 export default app;
