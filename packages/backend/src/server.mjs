@@ -10,6 +10,9 @@ import { PORT, NODE_ENV } from '../../../config/backend.config.mjs';
 import logger from './utils/logger.mjs';
 import { connectDB } from './db/connection.mjs';
 
+// Import routes
+import authRoutes from './routes/auth.routes.mjs';
+
 // Create Express app
 const app = express();
 
@@ -26,11 +29,20 @@ app.use(cookieParser());
 const morganFormat = NODE_ENV === 'production' ? 'combined' : 'dev';
 app.use(morgan(morganFormat, { stream: logger.stream }));
 
-// Mount API Routes (placeholders - will be implemented in subsequent issues)
-// Later we'll organize these routes better and use routers
+// Mount API Routes
+app.use('/api/auth', authRoutes);
+
+// Root API endpoint
 app.get('/api', (req, res) => {
   logger.info('API root endpoint accessed');
-  res.json({ message: 'Welcome to the Glizzy Gobbler 4000 API' });
+  res.json({ 
+    message: 'Welcome to the Glizzy Gobbler 4000 API',
+    version: '0.1.0',
+    endpoints: {
+      auth: '/api/auth',
+      health: '/health'
+    }
+  });
 });
 
 // Simple health check route
@@ -86,6 +98,7 @@ const startServer = async () => {
     // Start Express server
     app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT} in ${NODE_ENV} mode`);
+      logger.info(`API Documentation: http://localhost:${PORT}/api`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
